@@ -32,8 +32,10 @@ namespace DemandIndexPlus
         private readonly EMA _emaRange = new() { Period = 10 };
         private readonly EMA _emaSp = new() { Period = 10 };
         private readonly EMA _emaVolume = new() { Period = 10 };
-        private readonly SMA _sma = new() { Period = 10 };
         private readonly ValueDataSeries _priceSumSeries = new("PriceSum");
+        
+        // Manual SMA period (no SMA indicator to avoid state issues)
+        private int _smaPeriod = 10;
 
         // Additional indicators for correlation filters
         private readonly VWAP _vwap = new();
@@ -150,10 +152,10 @@ namespace DemandIndexPlus
         [Range(1, 10000)]
         public int SmaPeriod
         {
-            get => _sma.Period;
+            get => _smaPeriod;
             set
             {
-                _sma.Period = value;
+                _smaPeriod = value;
                 RecalculateValues();
             }
         }
@@ -429,10 +431,10 @@ namespace DemandIndexPlus
 
             // Calculate DI value
             decimal diValue = CalculateDemandIndex(bar);
-            decimal smaValue = _sma.Calculate(bar, diValue);
-
             _diSeries[bar] = diValue;
-            _smaSeries[bar] = smaValue;
+            
+            // Calculate SMA manually
+            _smaSeries[bar] = CalculateManualSMA(bar);
 
             // Color DI line in extreme zones
             if (_colorDIExtreme)
@@ -555,6 +557,25 @@ namespace DemandIndexPlus
                 <= (double)decimal.MinValue => decimal.MinValue,
                 _ => (decimal)value
             };
+        }
+
+        /// <summary>
+        /// Calculate SMA manually to avoid state issues with ATAS SMA indicator
+        /// </summary>
+        private decimal CalculateManualSMA(int bar)
+        {
+            if (bar < _smaPeriod - 1)
+            {
+                // Not enough bars for full SMA, return current DI value
+                return _diSeries[bar];
+            }
+
+            decimal sum = 0m;
+            for (int i = 0; i < _smaPeriod; i++)
+            {
+                sum += _diSeries[bar - i];
+            }
+            return sum / _smaPeriod;
         }
 
         #endregion
