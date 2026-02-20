@@ -62,10 +62,7 @@ namespace DemandIndexPlus
         };
 
         /// <summary>Candle coloring on price chart</summary>
-        private readonly PaintbarsDataSeries _paintBars = new("SignalCandles", "Signal Candles")
-        {
-            IsHidden = true
-        };
+        private readonly PaintbarsDataSeries _paintBars = new("SignalCandles", "Signal Candles");
 
         #endregion
 
@@ -589,91 +586,118 @@ namespace DemandIndexPlus
         {
             if (bar < 3) return;
 
-            decimal diPrev1 = _diSeries[bar - 1];
-            decimal diPrev2 = _diSeries[bar - 2];
+            decimal diCurrent = _diSeries[bar];
+            decimal diPrev = _diSeries[bar - 1];
 
-            bool isLongCandle = candle.Close > candle.Open;
-            bool isShortCandle = candle.Close < candle.Open;
+            bool isGreenCandle = candle.Close > candle.Open;
+            bool isRedCandle = candle.Close < candle.Open;
 
-            // Get correlation filter values
-            decimal vah = (decimal)_dynamicLevels.DataSeries[2][bar];
-            decimal val = (decimal)_dynamicLevels.DataSeries[3][bar];
-            decimal vwapValue = _vwap[bar];
-            decimal prevDayHigh = (decimal)_dailyLines.DataSeries[1][bar]; // High
-            decimal prevDayLow = (decimal)_dailyLines.DataSeries[2][bar];  // Low
+            // Get correlation filter values (for optional filters)
+            decimal vah = 0, val = 0, vwapValue = 0, prevDayHigh = 0, prevDayLow = 0;
+            try
+            {
+                vah = (decimal)_dynamicLevels.DataSeries[2][bar];
+                val = (decimal)_dynamicLevels.DataSeries[3][bar];
+                vwapValue = _vwap[bar];
+                prevDayHigh = (decimal)_dailyLines.DataSeries[1][bar];
+                prevDayLow = (decimal)_dailyLines.DataSeries[2][bar];
+            }
+            catch { /* Ignore if not available */ }
 
-            // Track extreme zone state
-            bool currentlyOverbought = diPrev1 > _extremeLevel;
-            bool currentlyOversold = diPrev1 < -_extremeLevel;
-
-            // Check for DI Cross signals
-            bool diCrossLong = diPrev1 > 0 && diPrev2 < 0;
-            bool diCrossShort = diPrev1 < 0 && diPrev2 > 0;
-
-            // Check for Extreme Reversal signals
-            bool extremeReversalLong = _wasInOversold && isLongCandle && !_extremeReversalPaintedOversold;
-            bool extremeReversalShort = _wasInOverbought && isShortCandle && !_extremeReversalPaintedOverbought;
-
-            // Apply correlation filters
-            bool longFilterPassed = CheckLongFilters(candle.Close, vah, vwapValue, prevDayHigh);
-            bool shortFilterPassed = CheckShortFilters(candle.Close, val, vwapValue, prevDayLow);
-
-            // Determine which signal to show (priority: Extreme Reversal > Cross)
+            // Reset paint color
             Color? paintColor = null;
             string alertMessage = null;
 
-            if (extremeReversalLong && longFilterPassed)
+            // ===== SIGNAL 1: DI Cross Long =====
+            // DI crossed from negative to positive (previous bar was first positive after being negative)
+            bool diCrossedLong = diPrev > 0 && _diSeries[bar - 2] <= 0;
+            
+            // ===== SIGNAL 2: DI Cross Short =====
+            // DI crossed from positive to negative (previous bar was first negative after being positive)
+            bool diCrossedShort = diPrev < 0 && _diSeries[bar - 2] >= 0;
+
+            // ===== SIGNAL 3: Extreme Reversal from Overbought (DI > +60) =====
+            // DI was > +ExtremeLevel, now first RED candle appears = potential reversal SHORT
+            if (_wasInOverbought && isRedCandle && !_extremeReversalPaintedOverbought)
             {
-                paintColor = _extremeReversalColor;
-                alertMessage = "DI Extreme Reversal Long (Oversold)";
-                _extremeReversalPaintedOversold = true;
+                bool filterPassed = CheckShortFilters(candle.Close, val, vwapValue, prevDayLow);
+                if (filterPassed)
+                {
+                    paintColor = _extremeReversalColor;
+                    alertMessage = "DI Extreme Reversal Short (Overbought)";
+                    _extremeReversalPaintedOverbought = true;
+                }
             }
-            else if (extremeReversalShort && shortFilterPassed)
+            // ===== SIGNAL 4: Extreme Reversal from Oversold (DI < -60) =====
+            // DI was < -ExtremeLevel, now first GREEN candle appears = potential reversal LONG
+            else if (_wasInOversold && isGreenCandle && !_extremeReversalPaintedOversold)
             {
-                paintColor = _extremeReversalColor;
-                alertMessage = "DI Extreme Reversal Short (Overbought)";
-                _extremeReversalPaintedOverbought = true;
+                bool filterPassed = CheckLongFilters(candle.Close, vah, vwapValue, prevDayHigh);
+                if (filterPassed)
+                {
+                    paintColor = _extremeReversalColor;
+                    alertMessage = "DI Extreme Reversal Long (Oversold)";
+                    _extremeReversalPaintedOversold = true;
+                }
             }
-            else if (diCrossLong && longFilterPassed)
+            // ===== SIGNAL 5: DI Cross Long - paint current bar green =====
+            else if (diCrossedLong)
             {
-                paintColor = _crossLongColor;
-                alertMessage = "DI Cross Long Signal";
+                bool filterPassed = CheckLongFilters(candle.Close, vah, vwapValue, prevDayHigh);
+                if (filterPassed)
+                {
+                    paintColor = _crossLongColor;
+                    alertMessage = "DI Cross Long Signal";
+                }
             }
-            else if (diCrossShort && shortFilterPassed)
+            // ===== SIGNAL 6: DI Cross Short - paint current bar red =====
+            else if (diCrossedShort)
             {
-                paintColor = _crossShortColor;
-                alertMessage = "DI Cross Short Signal";
+                bool filterPassed = CheckShortFilters(candle.Close, val, vwapValue, prevDayLow);
+                if (filterPassed)
+                {
+                    paintColor = _crossShortColor;
+                    alertMessage = "DI Cross Short Signal";
+                }
             }
 
             // Apply candle coloring
             _paintBars[bar] = paintColor;
 
-            // Fire alert
-            if (alertMessage != null && _enableAlerts)
+            // Fire alert (only on last bar to avoid historical alerts)
+            if (alertMessage != null && _enableAlerts && bar == CurrentBar - 1)
             {
                 AddAlert("DemandIndexPlus", alertMessage);
             }
 
-            // Update extreme zone tracking
-            if (currentlyOverbought)
+            // ===== Update extreme zone tracking =====
+            // Track when we enter overbought zone
+            if (diCurrent > _extremeLevel)
             {
-                _wasInOverbought = true;
-                _extremeReversalPaintedOverbought = false;
+                if (!_wasInOverbought)
+                {
+                    _wasInOverbought = true;
+                    _extremeReversalPaintedOverbought = false; // Reset so first reversal candle can be painted
+                }
             }
-            else if (!currentlyOverbought && diPrev1 < _extremeLevel * 0.5m)
+            else if (diCurrent < _extremeLevel * 0.8m)
             {
-                // Reset when DI drops significantly below extreme
+                // Reset overbought state when DI drops below 80% of extreme level
                 _wasInOverbought = false;
             }
 
-            if (currentlyOversold)
+            // Track when we enter oversold zone
+            if (diCurrent < -_extremeLevel)
             {
-                _wasInOversold = true;
-                _extremeReversalPaintedOversold = false;
+                if (!_wasInOversold)
+                {
+                    _wasInOversold = true;
+                    _extremeReversalPaintedOversold = false; // Reset so first reversal candle can be painted
+                }
             }
-            else if (!currentlyOversold && diPrev1 > -_extremeLevel * 0.5m)
+            else if (diCurrent > -_extremeLevel * 0.8m)
             {
-                // Reset when DI rises significantly above extreme
+                // Reset oversold state when DI rises above 80% of extreme level
                 _wasInOversold = false;
             }
         }
