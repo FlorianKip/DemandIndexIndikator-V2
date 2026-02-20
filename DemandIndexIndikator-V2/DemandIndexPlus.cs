@@ -47,7 +47,7 @@ namespace DemandIndexPlus
         /// <summary>Main DI line</summary>
         private readonly ValueDataSeries _diSeries = new("DI", "Demand Index")
         {
-            Color = Colors.DodgerBlue,
+            Color = Colors.White,
             Width = 2,
             ShowZeroValue = true
         };
@@ -55,7 +55,7 @@ namespace DemandIndexPlus
         /// <summary>SMA of DI</summary>
         private readonly ValueDataSeries _smaSeries = new("SMA", "DI Average")
         {
-            Color = Colors.Yellow,
+            Color = Colors.DodgerBlue,
             Width = 1
         };
 
@@ -343,6 +343,7 @@ namespace DemandIndexPlus
             Add(_dynamicLevels);
             Add(_dailyLines);
             Add(_vwap);
+            Add(_sma);  // Important: Add SMA so it resets on RecalculateValues()
 
             // Register data series
             DataSeries[0] = _diSeries;
