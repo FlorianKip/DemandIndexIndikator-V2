@@ -86,12 +86,38 @@ namespace DemandIndexPlus
 
         #endregion
 
+        #region Private Fields - Backing Fields for Properties
+
+        private int _extremeLevel = 60;
+        private bool _useVAFilter = false;
+        private bool _useVWAPFilter = false;
+        private bool _usePrevDayFilter = false;
+        private bool _showExtremeLines = true;
+        private bool _colorDIExtreme = true;
+        private bool _useTimeFilter = false;
+        private TimeSpan _tradingStartTime = new TimeSpan(9, 30, 0);
+        private TimeSpan _tradingEndTime = new TimeSpan(16, 0, 0);
+        private bool _enableAlerts = true;
+        private Color _crossLongColor = Colors.Lime;
+        private Color _crossShortColor = Colors.Red;
+        private Color _extremeReversalColor = Colors.Orange;
+
+        #endregion
+
         #region Public Properties - General Settings
 
         [Display(Name = "Extreme Level", Order = 10, GroupName = "General", Description = "Level for overbought/oversold detection")]
         [ATAS.Indicators.Parameter]
         [Range(1, 200)]
-        public int ExtremeLevel { get; set; } = 60;
+        public int ExtremeLevel 
+        { 
+            get => _extremeLevel;
+            set
+            {
+                _extremeLevel = value;
+                RecalculateValues();
+            }
+        }
 
         [Display(Name = "BuySell Power Period", Order = 11, GroupName = "General")]
         [ATAS.Indicators.Parameter]
@@ -137,13 +163,37 @@ namespace DemandIndexPlus
         #region Public Properties - Candle Coloring
 
         [Display(Name = "Cross Long Color", Order = 20, GroupName = "Candle Coloring")]
-        public Color CrossLongColor { get; set; } = Colors.Lime;
+        public Color CrossLongColor 
+        { 
+            get => _crossLongColor;
+            set
+            {
+                _crossLongColor = value;
+                RecalculateValues();
+            }
+        }
 
         [Display(Name = "Cross Short Color", Order = 21, GroupName = "Candle Coloring")]
-        public Color CrossShortColor { get; set; } = Colors.Red;
+        public Color CrossShortColor 
+        { 
+            get => _crossShortColor;
+            set
+            {
+                _crossShortColor = value;
+                RecalculateValues();
+            }
+        }
 
         [Display(Name = "Extreme Reversal Color", Order = 22, GroupName = "Candle Coloring")]
-        public Color ExtremeReversalColor { get; set; } = Colors.Orange;
+        public Color ExtremeReversalColor 
+        { 
+            get => _extremeReversalColor;
+            set
+            {
+                _extremeReversalColor = value;
+                RecalculateValues();
+            }
+        }
 
         #endregion
 
@@ -151,15 +201,39 @@ namespace DemandIndexPlus
 
         [Display(Name = "Use VA Filter", Order = 30, GroupName = "Correlation Filters", Description = "Long only > VAH, Short only < VAL")]
         [ATAS.Indicators.Parameter]
-        public bool UseVAFilter { get; set; } = false;
+        public bool UseVAFilter 
+        { 
+            get => _useVAFilter;
+            set
+            {
+                _useVAFilter = value;
+                RecalculateValues();
+            }
+        }
 
         [Display(Name = "Use VWAP Filter", Order = 31, GroupName = "Correlation Filters", Description = "Long only > VWAP, Short only < VWAP")]
         [ATAS.Indicators.Parameter]
-        public bool UseVWAPFilter { get; set; } = false;
+        public bool UseVWAPFilter 
+        { 
+            get => _useVWAPFilter;
+            set
+            {
+                _useVWAPFilter = value;
+                RecalculateValues();
+            }
+        }
 
         [Display(Name = "Use PrevDay Filter", Order = 32, GroupName = "Correlation Filters", Description = "Long only > PrevDay High, Short only < PrevDay Low")]
         [ATAS.Indicators.Parameter]
-        public bool UsePrevDayFilter { get; set; } = false;
+        public bool UsePrevDayFilter 
+        { 
+            get => _usePrevDayFilter;
+            set
+            {
+                _usePrevDayFilter = value;
+                RecalculateValues();
+            }
+        }
 
         #endregion
 
@@ -167,11 +241,28 @@ namespace DemandIndexPlus
 
         [Display(Name = "Show Extreme Lines", Order = 40, GroupName = "Visuals", Description = "Show dashed horizontal lines at extreme levels")]
         [ATAS.Indicators.Parameter]
-        public bool ShowExtremeLines { get; set; } = true;
+        public bool ShowExtremeLines 
+        { 
+            get => _showExtremeLines;
+            set
+            {
+                _showExtremeLines = value;
+                UpdateExtremeLines();
+                RecalculateValues();
+            }
+        }
 
         [Display(Name = "Color DI in Extreme", Order = 41, GroupName = "Visuals", Description = "Color DI line red when overbought, green when oversold")]
         [ATAS.Indicators.Parameter]
-        public bool ColorDIExtreme { get; set; } = true;
+        public bool ColorDIExtreme 
+        { 
+            get => _colorDIExtreme;
+            set
+            {
+                _colorDIExtreme = value;
+                RecalculateValues();
+            }
+        }
 
         #endregion
 
@@ -179,15 +270,39 @@ namespace DemandIndexPlus
 
         [Display(Name = "Use Time Filter", Order = 50, GroupName = "Time Filter")]
         [ATAS.Indicators.Parameter]
-        public bool UseTimeFilter { get; set; } = false;
+        public bool UseTimeFilter 
+        { 
+            get => _useTimeFilter;
+            set
+            {
+                _useTimeFilter = value;
+                RecalculateValues();
+            }
+        }
 
         [Display(Name = "Trading Start Time", Order = 51, GroupName = "Time Filter")]
         [ATAS.Indicators.Parameter]
-        public TimeSpan TradingStartTime { get; set; } = new TimeSpan(9, 30, 0);
+        public TimeSpan TradingStartTime 
+        { 
+            get => _tradingStartTime;
+            set
+            {
+                _tradingStartTime = value;
+                RecalculateValues();
+            }
+        }
 
         [Display(Name = "Trading End Time", Order = 52, GroupName = "Time Filter")]
         [ATAS.Indicators.Parameter]
-        public TimeSpan TradingEndTime { get; set; } = new TimeSpan(16, 0, 0);
+        public TimeSpan TradingEndTime 
+        { 
+            get => _tradingEndTime;
+            set
+            {
+                _tradingEndTime = value;
+                RecalculateValues();
+            }
+        }
 
         #endregion
 
@@ -195,7 +310,15 @@ namespace DemandIndexPlus
 
         [Display(Name = "Enable Alerts", Order = 60, GroupName = "Alerts")]
         [ATAS.Indicators.Parameter]
-        public bool EnableAlerts { get; set; } = true;
+        public bool EnableAlerts 
+        { 
+            get => _enableAlerts;
+            set
+            {
+                _enableAlerts = value;
+                // No recalculation needed for alerts toggle
+            }
+        }
 
         #endregion
 
@@ -270,22 +393,22 @@ namespace DemandIndexPlus
             };
             LineSeries.Add(zeroLine);
 
-            if (ShowExtremeLines)
+            if (_showExtremeLines)
             {
                 // Overbought line (red - sell zone)
-                var overboughtLine = new LineSeries("Overbought", $"+{ExtremeLevel} (Overbought)")
+                var overboughtLine = new LineSeries("Overbought", $"+{_extremeLevel} (Overbought)")
                 {
                     Color = System.Drawing.Color.Red.Convert(),
-                    Value = ExtremeLevel,
+                    Value = _extremeLevel,
                     Width = 1
                 };
                 LineSeries.Add(overboughtLine);
 
                 // Oversold line (green - buy zone)
-                var oversoldLine = new LineSeries("Oversold", $"-{ExtremeLevel} (Oversold)")
+                var oversoldLine = new LineSeries("Oversold", $"-{_extremeLevel} (Oversold)")
                 {
                     Color = System.Drawing.Color.Green.Convert(),
-                    Value = -ExtremeLevel,
+                    Value = -_extremeLevel,
                     Width = 1
                 };
                 LineSeries.Add(oversoldLine);
@@ -308,7 +431,7 @@ namespace DemandIndexPlus
             _smaSeries[bar] = smaValue;
 
             // Color DI line in extreme zones
-            if (ColorDIExtreme)
+            if (_colorDIExtreme)
             {
                 ApplyDIColoring(bar, diValue);
             }
@@ -455,8 +578,8 @@ namespace DemandIndexPlus
             decimal prevDayLow = (decimal)_dailyLines.DataSeries[2][bar];  // Low
 
             // Track extreme zone state
-            bool currentlyOverbought = diPrev1 > ExtremeLevel;
-            bool currentlyOversold = diPrev1 < -ExtremeLevel;
+            bool currentlyOverbought = diPrev1 > _extremeLevel;
+            bool currentlyOversold = diPrev1 < -_extremeLevel;
 
             // Check for DI Cross signals
             bool diCrossLong = diPrev1 > 0 && diPrev2 < 0;
@@ -476,24 +599,24 @@ namespace DemandIndexPlus
 
             if (extremeReversalLong && longFilterPassed)
             {
-                paintColor = ExtremeReversalColor;
+                paintColor = _extremeReversalColor;
                 alertMessage = "DI Extreme Reversal Long (Oversold)";
                 _extremeReversalPaintedOversold = true;
             }
             else if (extremeReversalShort && shortFilterPassed)
             {
-                paintColor = ExtremeReversalColor;
+                paintColor = _extremeReversalColor;
                 alertMessage = "DI Extreme Reversal Short (Overbought)";
                 _extremeReversalPaintedOverbought = true;
             }
             else if (diCrossLong && longFilterPassed)
             {
-                paintColor = CrossLongColor;
+                paintColor = _crossLongColor;
                 alertMessage = "DI Cross Long Signal";
             }
             else if (diCrossShort && shortFilterPassed)
             {
-                paintColor = CrossShortColor;
+                paintColor = _crossShortColor;
                 alertMessage = "DI Cross Short Signal";
             }
 
@@ -501,7 +624,7 @@ namespace DemandIndexPlus
             _paintBars[bar] = paintColor;
 
             // Fire alert
-            if (alertMessage != null && EnableAlerts)
+            if (alertMessage != null && _enableAlerts)
             {
                 AddAlert("DemandIndexPlus", alertMessage);
             }
@@ -512,7 +635,7 @@ namespace DemandIndexPlus
                 _wasInOverbought = true;
                 _extremeReversalPaintedOverbought = false;
             }
-            else if (!currentlyOverbought && diPrev1 < ExtremeLevel * 0.5m)
+            else if (!currentlyOverbought && diPrev1 < _extremeLevel * 0.5m)
             {
                 // Reset when DI drops significantly below extreme
                 _wasInOverbought = false;
@@ -523,7 +646,7 @@ namespace DemandIndexPlus
                 _wasInOversold = true;
                 _extremeReversalPaintedOversold = false;
             }
-            else if (!currentlyOversold && diPrev1 > -ExtremeLevel * 0.5m)
+            else if (!currentlyOversold && diPrev1 > -_extremeLevel * 0.5m)
             {
                 // Reset when DI rises significantly above extreme
                 _wasInOversold = false;
@@ -539,13 +662,13 @@ namespace DemandIndexPlus
         /// </summary>
         private bool CheckLongFilters(decimal price, decimal vah, decimal vwap, decimal prevDayHigh)
         {
-            if (UseVAFilter && price <= vah)
+            if (_useVAFilter && price <= vah)
                 return false;
 
-            if (UseVWAPFilter && price <= vwap)
+            if (_useVWAPFilter && price <= vwap)
                 return false;
 
-            if (UsePrevDayFilter && price <= prevDayHigh)
+            if (_usePrevDayFilter && price <= prevDayHigh)
                 return false;
 
             return true;
@@ -556,13 +679,13 @@ namespace DemandIndexPlus
         /// </summary>
         private bool CheckShortFilters(decimal price, decimal val, decimal vwap, decimal prevDayLow)
         {
-            if (UseVAFilter && price >= val)
+            if (_useVAFilter && price >= val)
                 return false;
 
-            if (UseVWAPFilter && price >= vwap)
+            if (_useVWAPFilter && price >= vwap)
                 return false;
 
-            if (UsePrevDayFilter && price >= prevDayLow)
+            if (_usePrevDayFilter && price >= prevDayLow)
                 return false;
 
             return true;
@@ -573,11 +696,11 @@ namespace DemandIndexPlus
         /// </summary>
         private bool IsWithinTradingTime(DateTime candleTime)
         {
-            if (!UseTimeFilter)
+            if (!_useTimeFilter)
                 return true;
 
             TimeSpan currentTime = candleTime.TimeOfDay;
-            return currentTime >= TradingStartTime && currentTime <= TradingEndTime;
+            return currentTime >= _tradingStartTime && currentTime <= _tradingEndTime;
         }
 
         #endregion
@@ -589,12 +712,12 @@ namespace DemandIndexPlus
         /// </summary>
         private void ApplyDIColoring(int bar, decimal diValue)
         {
-            if (diValue > ExtremeLevel)
+            if (diValue > _extremeLevel)
             {
                 // Overbought - Red
                 _diSeries.Colors[bar] = Colors.Red.Convert();
             }
-            else if (diValue < -ExtremeLevel)
+            else if (diValue < -_extremeLevel)
             {
                 // Oversold - Green
                 _diSeries.Colors[bar] = Colors.Green.Convert();
