@@ -723,16 +723,21 @@ namespace DemandIndexPlus
 
         /// <summary>
         /// Check if long signal passes all enabled filters
+        /// Long signals (green + orange reversal from oversold) only allowed when:
+        /// - Price > VAH (above Value Area High = bullish zone)
+        /// - Price > VWAP (above VWAP = bullish)
+        /// - Price > PrevDay High (breakout)
         /// </summary>
         private bool CheckLongFilters(decimal price, decimal vah, decimal vwap, decimal prevDayHigh)
         {
-            if (_useVAFilter && price <= vah)
+            // If filter is enabled, price must be ABOVE the level
+            if (_useVAFilter && vah > 0 && price <= vah)
                 return false;
 
-            if (_useVWAPFilter && price <= vwap)
+            if (_useVWAPFilter && vwap > 0 && price <= vwap)
                 return false;
 
-            if (_usePrevDayFilter && price <= prevDayHigh)
+            if (_usePrevDayFilter && prevDayHigh > 0 && price <= prevDayHigh)
                 return false;
 
             return true;
@@ -740,16 +745,21 @@ namespace DemandIndexPlus
 
         /// <summary>
         /// Check if short signal passes all enabled filters
+        /// Short signals (red) only allowed when:
+        /// - Price < VAL (below Value Area Low = bearish zone)
+        /// - Price < VWAP (below VWAP = bearish)
+        /// - Price < PrevDay Low (breakdown)
         /// </summary>
         private bool CheckShortFilters(decimal price, decimal val, decimal vwap, decimal prevDayLow)
         {
-            if (_useVAFilter && price >= val)
+            // If filter is enabled, price must be BELOW the level
+            if (_useVAFilter && val > 0 && price >= val)
                 return false;
 
-            if (_useVWAPFilter && price >= vwap)
+            if (_useVWAPFilter && vwap > 0 && price >= vwap)
                 return false;
 
-            if (_usePrevDayFilter && price >= prevDayLow)
+            if (_usePrevDayFilter && prevDayLow > 0 && price >= prevDayLow)
                 return false;
 
             return true;
