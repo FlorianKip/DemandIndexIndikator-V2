@@ -83,6 +83,9 @@ namespace DemandIndexPlus
         /// <summary>Last bar processed (for state reset)</summary>
         private int _lastBar = -1;
 
+        /// <summary>Track last bar where alert was sent (to prevent duplicate alerts)</summary>
+        private int _lastAlertBar = -1;
+
         #endregion
 
         #region Private Fields - Backing Fields for Properties
@@ -372,6 +375,7 @@ namespace DemandIndexPlus
             _extremeReversalPaintedOverbought = false;
             _extremeReversalPaintedOversold = false;
             _lastBar = -1;
+            _lastAlertBar = -1;
 
             // Clear internal data series to prevent drift
             _priceSumSeries.Clear();
@@ -664,10 +668,21 @@ namespace DemandIndexPlus
             // Apply candle coloring
             _paintBars[bar] = paintColor;
 
-            // Fire alert (only on last bar to avoid historical alerts)
-            if (alertMessage != null && _enableAlerts && bar == CurrentBar - 1)
+            // Fire alert only on CLOSED bars (bar < CurrentBar - 1) and only once per bar
+            // This ensures alerts are sent on candle close, not during candle formation
+            if (alertMessage != null && _enableAlerts)
             {
-                AddAlert("DemandIndexPlus", alertMessage);
+                // Only alert on the second-to-last bar (which is the last CLOSED bar)
+                // And only if we haven't already alerted for this bar
+                bool isClosedBar = bar < CurrentBar - 1;
+                bool isLastClosedBar = bar == CurrentBar - 2;
+                bool notYetAlerted = bar != _lastAlertBar;
+                
+                if (isLastClosedBar && notYetAlerted)
+                {
+                    AddAlert("DemandIndexPlus", alertMessage);
+                    _lastAlertBar = bar;
+                }
             }
 
             // ===== Update extreme zone tracking =====
