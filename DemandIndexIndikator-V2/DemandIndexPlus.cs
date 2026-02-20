@@ -609,12 +609,12 @@ namespace DemandIndexPlus
             string alertMessage = null;
 
             // ===== SIGNAL 1: DI Cross Long =====
-            // DI crossed from negative to positive (previous bar was first positive after being negative)
-            bool diCrossedLong = diPrev > 0 && _diSeries[bar - 2] <= 0;
+            // DI crossed from negative to positive on CURRENT bar
+            bool diCrossedLong = diCurrent > 0 && diPrev <= 0;
             
             // ===== SIGNAL 2: DI Cross Short =====
-            // DI crossed from positive to negative (previous bar was first negative after being positive)
-            bool diCrossedShort = diPrev < 0 && _diSeries[bar - 2] >= 0;
+            // DI crossed from positive to negative on CURRENT bar
+            bool diCrossedShort = diCurrent < 0 && diPrev >= 0;
 
             // ===== SIGNAL 3: Extreme Reversal from Overbought (DI > +60) =====
             // DI was > +ExtremeLevel, now first RED candle appears = potential reversal SHORT
