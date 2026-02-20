@@ -339,11 +339,11 @@ namespace DemandIndexPlus
             // Initialize Daily Lines for PrevDay
             _dailyLines.Period = DailyLines.PeriodType.PreviousDay;
 
-            // Add child indicators
+            // Add child indicators for correlation filters only
             Add(_dynamicLevels);
             Add(_dailyLines);
             Add(_vwap);
-            Add(_sma);  // Important: Add SMA so it resets on RecalculateValues()
+            // Note: Do NOT add _sma, _emaBp, _emaSp, _emaVolume - they are manually calculated
 
             // Register data series
             DataSeries[0] = _diSeries;
@@ -373,6 +373,9 @@ namespace DemandIndexPlus
             _extremeReversalPaintedOverbought = false;
             _extremeReversalPaintedOversold = false;
             _lastBar = -1;
+
+            // Clear internal data series to prevent drift
+            _priceSumSeries.Clear();
 
             UpdateExtremeLines();
         }
